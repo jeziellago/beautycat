@@ -1,5 +1,7 @@
 # 🐾 BeautyCat
 
+![BeautyCat](beautycat.png)
+
 A beautiful, web-based `adb logcat` viewer — Android Studio's Logcat without the IDE.
 
 BeautyCat wraps `adb logcat`, streams logs to your browser over WebSocket, and gives
