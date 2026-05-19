@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BeautyCat — adb logcat</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🐱</text></svg>" />
+</head>
+<body>
+  <header class="toolbar">
+    <div class="brand">
+      <span class="brand-mark">🐾</span>
+      <span class="brand-name">BeautyCat</span>
+    </div>
+
+    <div class="group">
+      <label class="lbl">Device</label>
+      <select id="deviceSelect" class="ctl"></select>
+      <button id="refreshDevices" class="icon-btn" title="Refresh devices">⟳</button>
+      <span id="connStatus" class="conn-dot offline" title="disconnected"></span>
+    </div>
+
+    <div class="group">
+      <label class="lbl">Level</label>
+      <select id="levelFilter" class="ctl">
+        <option value="">All</option>
+        <option value="V">Verbose+</option>
+        <option value="D">Debug+</option>
+        <option value="I">Info+</option>
+        <option value="W">Warn+</option>
+        <option value="E">Error+</option>
+        <option value="A">Assert+</option>
+      </select>
+    </div>
+
+    <div class="group">
+      <input id="tagFilter" class="ctl" placeholder="Tag contains…" />
+    </div>
+    <div class="group">
+      <input id="packageFilter" class="ctl" placeholder="Package contains…" />
+    </div>
+
+    <div class="group grow">
+      <input id="searchInput" class="ctl search" placeholder="Search message… (/  to focus)" />
+      <label class="chk" title="Treat search as regex">
+        <input type="checkbox" id="regexToggle" /> .*
+      </label>
+    </div>
+
+    <div class="group">
+      <button id="pauseBtn" class="btn" title="Pause (Space)">⏸ Pause</button>
+      <button id="clearBtn" class="btn warn" title="Clear (Ctrl+L)">🗑 Clear</button>
+    </div>
+
+    <div class="group">
+      <label class="lbl">Preset</label>
+      <select id="presetSelect" class="ctl"></select>
+      <button id="savePresetBtn" class="icon-btn" title="Save current filter as preset">💾</button>
+      <button id="deletePresetBtn" class="icon-btn" title="Delete selected preset">✕</button>
+    </div>
+
+    <div class="group">
+      <button id="exportTxtBtn" class="btn ghost" title="Export filtered as .txt">⇩ .txt</button>
+      <button id="exportJsonBtn" class="btn ghost" title="Export filtered as .json">⇩ .json</button>
+    </div>
+  </header>
+
+  <main id="logScroller" class="log-scroller">
+    <div id="logSizer" class="log-sizer"></div>
+    <div id="logViewport" class="log-viewport"></div>
+    <div id="emptyState" class="empty-state">
+      <div class="empty-title">No logs yet</div>
+      <div class="empty-sub">Select a connected device to start streaming.</div>
+    </div>
+  </main>
+
+  <footer class="statusbar">
+    <span id="statTotal">0 records</span>
+    <span class="sep">·</span>
+    <span id="statVisible">0 visible</span>
+    <span class="sep">·</span>
+    <span id="statAutoscroll" class="auto-on">auto-scroll on</span>
+    <span class="sep">·</span>
+    <span id="statPaused">live</span>
+    <span class="spacer"></span>
+    <span class="hint"><kbd>/</kbd> search · <kbd>Space</kbd> pause · <kbd>Ctrl</kbd>+<kbd>L</kbd> clear · <kbd>Esc</kbd> reset filters</span>
+  </footer>
+
+  <div id="logModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTag">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-panel">
+      <header class="modal-header">
+        <div class="modal-meta">
+          <span id="modalLevel" class="modal-level"></span>
+          <span id="modalTime" class="modal-time"></span>
+          <span id="modalTag" class="modal-tag"></span>
+          <span id="modalPkg" class="modal-pkg hidden"></span>
+          <span id="modalIds" class="modal-ids"></span>
+        </div>
+        <div class="modal-actions">
+          <button id="modalCopyBtn" class="btn ghost" title="Copy full message">⧉ Copy</button>
+          <button class="icon-btn" data-modal-close title="Close (Esc)">✕</button>
+        </div>
+      </header>
+      <pre id="modalBody" class="modal-body"></pre>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
