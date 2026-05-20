@@ -155,7 +155,7 @@ case ":$PATH:" in
 esac
 
 head "Done. Run: beautycat"
-say "  --port 8765                # change port"
+say "  --port 8099                # change port"
 say "  --no-browser               # don't open the browser"
 say "  --buffer-size 20000        # keep more logs in memory"
 say "  --adb-path /path/to/adb    # override adb location"

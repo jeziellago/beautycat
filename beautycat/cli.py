@@ -20,7 +20,7 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         description="A beautiful web UI for adb logcat.",
     )
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=8765, help="Port to bind (default: 8765)")
+    parser.add_argument("--port", type=int, default=8099, help="Port to bind (default: 8099)")
     parser.add_argument(
         "--buffer-size",
         type=int,
@@ -63,10 +63,27 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     url = f"http://{args.host}:{args.port}"
     print(f"BeautyCat {__version__} listening on {url}", file=sys.stderr)
+    print("Press Ctrl+C to quit.", file=sys.stderr)
     if not args.no_browser:
         _open_browser(url)
 
-    uvicorn.run(app, host=args.host, port=args.port, log_level=args.log_level)
+    # uvicorn handles SIGINT/SIGTERM itself: first press triggers graceful
+    # shutdown, second press forces exit. We cap timeout_graceful_shutdown
+    # so a single Ctrl+C ends the process promptly even with live websockets
+    # and adb logcat subprocesses attached.
+    uvicorn_config = uvicorn.Config(
+        app,
+        host=args.host,
+        port=args.port,
+        log_level=args.log_level,
+        timeout_graceful_shutdown=2,
+    )
+    server = uvicorn.Server(uvicorn_config)
+
+    try:
+        server.run()
+    except KeyboardInterrupt:
+        return 130
     return 0
 
 

@@ -55,14 +55,14 @@ Plug in a device (or start an emulator), then:
 beautycat
 ```
 
-The browser opens at <http://127.0.0.1:8765> and streaming starts as soon as you
+The browser opens at <http://127.0.0.1:8099> and streaming starts as soon as you
 pick a device.
 
 Flags:
 
 | Flag             | Default       | Notes                                    |
 |------------------|---------------|------------------------------------------|
-| `--port`         | `8765`        | Port to bind                             |
+| `--port`         | `8099`        | Port to bind                             |
 | `--host`         | `127.0.0.1`   | Bind address (use `0.0.0.0` for LAN)     |
 | `--buffer-size`  | `10000`       | Records per device kept in memory        |
 | `--adb-path`     | auto          | Path to `adb` if not on `PATH`           |
