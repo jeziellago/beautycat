@@ -124,49 +124,47 @@ def create_app(config: Optional[AppConfig] = None) -> FastAPI:
     @app.websocket("/ws/{serial}")
     async def ws_logs(ws: WebSocket, serial: str) -> None:
         await ws.accept()
-        try:
-            session = await sessions.get_or_create(serial)
-        except AdbError as e:
-            await ws.send_json({"type": "error", "message": str(e)})
-            await ws.close()
-            return
 
+        session = None
+        listener = None
         queue: asyncio.Queue[list[LogRecord]] = asyncio.Queue(maxsize=64)
 
-        async def listener(records: list[LogRecord]) -> None:
+        try:
             try:
-                queue.put_nowait(records)
-            except asyncio.QueueFull:
-                # Drop oldest batch to make room
-                try:
-                    queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    pass
+                session = await sessions.get_or_create(serial)
+            except AdbError as e:
+                await ws.send_json({"type": "error", "message": str(e)})
+                return
+
+            async def _listener(records: list[LogRecord]) -> None:
                 try:
                     queue.put_nowait(records)
                 except asyncio.QueueFull:
-                    pass
+                    try:
+                        queue.get_nowait()
+                    except asyncio.QueueEmpty:
+                        pass
+                    try:
+                        queue.put_nowait(records)
+                    except asyncio.QueueFull:
+                        pass
 
-        session.add_listener(listener)
-        try:
-            snapshot = session.snapshot()
+            listener = _listener
+            session.add_listener(listener)
+
             await ws.send_json(
                 {
                     "type": "snapshot",
-                    "records": [r.to_dict() for r in snapshot],
+                    "records": [r.to_dict() for r in session.snapshot()],
                 }
             )
 
             async def reader() -> None:
-                # Drain client messages (e.g. ping/keep-alive). We don't act on them yet.
-                try:
-                    while True:
-                        await ws.receive_text()
-                except WebSocketDisconnect:
-                    raise
+                # Drain client messages; returns on disconnect.
+                while True:
+                    await ws.receive_text()
 
-            reader_task = asyncio.create_task(reader())
-            try:
+            async def sender() -> None:
                 while True:
                     batch = await queue.get()
                     await ws.send_json(
@@ -175,12 +173,23 @@ def create_app(config: Optional[AppConfig] = None) -> FastAPI:
                             "records": [r.to_dict() for r in batch],
                         }
                     )
-            except WebSocketDisconnect:
-                pass
+
+            tasks = {asyncio.create_task(reader()), asyncio.create_task(sender())}
+            try:
+                _, pending = await asyncio.wait(
+                    tasks, return_when=asyncio.FIRST_COMPLETED
+                )
             finally:
-                reader_task.cancel()
+                for t in tasks:
+                    t.cancel()
+                # Await cancellations so they don't leak warnings.
+                await asyncio.gather(*tasks, return_exceptions=True)
+        except (WebSocketDisconnect, RuntimeError, ConnectionError):
+            # Client closed the socket (or transport went away). Just finish.
+            pass
         finally:
-            session.remove_listener(listener)
+            if session is not None and listener is not None:
+                session.remove_listener(listener)
 
     if web_dir.is_dir():
         @app.get("/")
