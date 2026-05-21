@@ -109,24 +109,6 @@ pytest -q
 beautycat --log-level debug
 ```
 
-Project layout:
-
-```
-beautycat/
-  adb.py          # async ADB wrapper: list_devices, stream_logcat, ps, clear
-  parser.py       # `-v threadtime` parser with multi-line continuation
-  buffer.py       # bounded ring buffer (collections.deque)
-  resolver.py     # background PID → package map
-  session.py      # per-device session: subprocess + parser + buffer + listeners
-  filters.py      # level/tag/package/pid/regex filter spec (used for server-side export)
-  presets.py      # JSON-backed filter preset CRUD
-  server.py       # FastAPI app: REST + WebSocket
-  cli.py          # `beautycat` entry point (argparse + uvicorn)
-  web/            # static assets (index.html, app.js, styles.css)
-tests/            # parser, filters, buffer, presets, ps-parser
-install.sh        # smooth installer (pipx or venv)
-```
-
 ## License
 
 MIT
